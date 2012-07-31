@@ -61,6 +61,8 @@ iexp2 = Iapp ifls (Icon 'V')
 iexp3 = Iapp iid iid
 iexp4 = Ilam 'x' $ Ilam 'x' $ Ilam 'y' $ Ivar 0
 iexp5 = Ilam 'f' $ Iapp iid (Ivar 0)
+iexp6 = Iapp (Ilam 'x' $ Iapp (Ivar 0) (Ivar 0))
+             (Iapp iid (Icon 'W'))
 -- therefore we make level-terms from index-terms
 lid   = i_to_l iid
 ltru  = i_to_l itru
@@ -182,4 +184,9 @@ ireduce others = (others, False)
 eval :: Lambda a => a -> a
 eval s = let (new_s, unfinished) = reduce s
          in if unfinished then eval new_s else new_s
+
+eval_show :: (Show a, Lambda a) => a -> IO ()
+eval_show s = print s >>
+ let (new_s, unfinished) = reduce s
+ in if unfinished then eval_show new_s else return ()
 
