@@ -60,6 +60,7 @@ iexp1 = Ilam 'x' (Iapp (Icon 'F') iexp)
 iexp2 = Iapp ifls (Icon 'V')
 iexp3 = Iapp iid iid
 iexp4 = Ilam 'x' $ Ilam 'x' $ Ilam 'y' $ Ivar 0
+iexp5 = Ilam 'f' $ Iapp iid (Ivar 0)
 -- therefore we make level-terms from index-terms
 lid   = i_to_l iid
 ltru  = i_to_l itru
@@ -99,7 +100,7 @@ i_to_l = loop (-1) where
 instance Show Ilambda where
  show = show . i_to_l -- print by conversion to de-Bruijn-level form
 
--- change level of bound variables (i. e., those with level EXCEEDING
+-- change level of bound variables (i. e., those whose level EXCEEDS
 -- the threshold) by an amount
 ladjust :: Int -> Int -> Llambda -> Llambda
 ladjust threshold amount formula = case formula of
@@ -113,9 +114,22 @@ ladjust threshold amount formula = case formula of
 iadjust :: Int -> Int -> Ilambda -> Ilambda
 iadjust threshold amount formula = case formula of
  Icon c   -> formula
- Ivar i   -> if i > threshold then Ivar (i + amount) else formula
+ Ivar i   -> if i >= threshold then Ivar (i + amount) else formula
  Iapp s t -> let f = iadjust threshold amount in Iapp (f s) (f t)
  Ilam x s -> Ilam x (iadjust (threshold + 1) amount s)
+
+{- REMARK
+   Interestingly, it doesn't matter whether the comparisons in ladjust
+   and iadjust are > or >=. In a beta redex ((λx. t) s), the free variables
+   of s with the greatest level and smallest indices occupies an echelon of
+   its own, whose counterpart is taken by λx and does not appear in t. It
+   is therefore irrelevant whether or not those free variables have their
+   levels/indices adjusted; in either case level/index clashes are
+   impossible, and any changes will be reversed by the second application
+   of ladjust/iadjust. The comparison sign is strict for iadjust and non-
+   strict for ladjust so that logically the bound variables of t have their
+   levels adjusted and the free variables of t have their index adjusted.
+-}
 
 -- substitute at level-i the level-i variables in t by s
 -- we assume that the bound variables of s have levels greater than i
@@ -160,6 +174,9 @@ ireduce (Iapp s t) = let
  (new_s, s_done) = ireduce s
  (new_t, t_done) = ireduce t
  in if s_done then (Iapp new_s t, True) else (Iapp s new_t, t_done)
+ireduce (Ilam x s) = let
+ (new_s, s_done) = ireduce s
+ in (Ilam x new_s, s_done)
 ireduce others = (others, False)
 
 eval :: Lambda a => a -> a
