@@ -1,5 +1,8 @@
 {-# LANGUAGE CPP #-}
 
+-- An exercise in evaluating abstract syntax trees
+-- of untyped lambda calculus in de-Bruijn notations
+
 module LAM (
 ) where
 
