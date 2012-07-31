@@ -38,7 +38,7 @@ instance Lambda Ilambda where reduce = ireduce ; subst = isubst
 -- Indices λ (λ 1 (0 0)) (λ 1 (0 0))
 -- Levels  λ (λ 0 (1 1)) (λ 0 (1 1))
 iy    = let omg = Ilam 'x' (Iapp (Ivar 1) (Iapp (Ivar 0) (Ivar 0)))
-       in Ilam 'f' (Iapp omg omg)
+        in Ilam 'f' (Iapp omg omg)
 ly    = let omg = Llam 'x' (Lapp (Lvar 0) (Lapp (Lvar 1) (Lvar 1)))
         in Llam 'f' (Lapp omg omg)
 ia    = Ilam 'x' (Ilam 'x' (Iapp (Ivar 1) (Ivar 0)))
@@ -56,6 +56,7 @@ iexp  = Iapp ifst (Iapp (Iapp ipair (Icon 'V')) (Icon 'W'))
 iexp1 = Ilam 'x' (Iapp (Icon 'F') iexp)
 iexp2 = Iapp ifls (Icon 'V')
 iexp3 = Iapp iid iid
+iexp4 = Ilam 'x' $ Ilam 'x' $ Ilam 'y' $ Ivar 0
 -- therefore we make level-terms from index-terms
 lid   = i_to_l iid
 ltru  = i_to_l itru
@@ -72,14 +73,12 @@ instance Show Llambda where
   to_s names taken level body = case body of
    Lcon c   -> c:[]
    Lvar i   -> Map.findWithDefault ('?':show i) i names
-   Llam x s -> if Set.member x taken
-               then let x_name = x : show level in
-                    '(':'λ':x_name ++ ". " ++
-                    to_s (Map.insert level x_name names)
-                         taken level s ++ ")"
-               else '(':'λ':x:'.':' ':[] ++
-                    to_s (Map.insert level (x:[]) names)
-                         (Set.insert x taken) (level + 1) s ++ ")"
+   Llam x s -> let (x_name , new_taken) = if Set.member x taken
+                   then (x : show level , taken              )
+                   else (x : []         , Set.insert x taken )
+               in "(λ" ++ x_name ++ ". "
+                  ++ to_s (Map.insert level x_name names)
+                          new_taken     (level + 1)     s ++ ")"
    Lapp s t -> let print = to_s names taken level in case t of
                Lapp _ _   -> print s ++ " (" ++ print t ++ ")"
                otherwise -> print s ++ ' ' : print t
