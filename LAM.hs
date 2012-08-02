@@ -52,15 +52,21 @@ instance Show Llambda where
   to_s names taken level body = case body of
    Lcon c   -> c:[]
    Lvar i   -> Map.findWithDefault ('?':show i) i names
-   Llam x s -> let (x_name , new_taken) = if Set.member x taken
-                   then (x : show level , taken              )
-                   else (x : []         , Set.insert x taken )
-               in "(λ" ++ x_name ++ ". "
-                  ++ to_s (Map.insert level x_name names)
-                          new_taken     (level + 1)     s ++ ")"
-   Lapp s t -> let print = to_s names taken level in case t of
-               Lapp _ _   -> print s ++ " (" ++ print t ++ ")"
-               otherwise -> print s ++ ' ' : print t
+   Llam x s ->    let (x_name , new_taken) = if Set.member x taken
+                      then (x : show level , taken              )
+                      else (x : []         , Set.insert x taken )
+                  in "λ" ++ x_name ++ ". "
+                     ++ to_s (Map.insert level x_name names)
+                             new_taken (level + 1) s
+
+   Lapp s t -> let print = to_s names taken level
+                   paren = \x -> '(' : print x ++ ")"
+                   s_str = (case s of Llam _ _  -> paren
+                                      otherwise -> print) s
+                   t_str = (case t of Llam _ _  -> paren
+                                      Lapp _ _  -> paren
+                                      otherwise -> print) t
+               in s_str ++ ' ' : t_str
   in to_s Map.empty Set.empty 0
 
 
@@ -93,6 +99,7 @@ ipair = Ilam 'f' (Ilam 's' (Ilam 'b'
 -- such compositionality are not enjoyed by de-Bruijn levels
 -- even if de-Bruijn indices can only do it reliably on combinators
 iid   = Ilam 'x' (Ivar 0)
+irep  = (Ilam 'x' $ Iapp (Ivar 0) (Ivar 0))
 ifst  = Ilam 'p' (Iapp (Ivar 0) itru)
 isnd  = Ilam 'p' (Iapp (Ivar 0) ifls)
 iexp  = Iapp ifst (Iapp (Iapp ipair (Icon 'V')) (Icon 'W'))
@@ -105,9 +112,15 @@ iexp6 = Iapp (Ilam 'x' $ Iapp (Ivar 0) (Ivar 0))
              (Iapp iid (Icon 'W'))
 -- therefore we make level-terms from index-terms
 lid   = i_to_l iid
+lrep  = i_to_l irep
 ltru  = i_to_l itru
 lfls  = i_to_l ifls
+lfst  = i_to_l ifst
+lsnd  = i_to_l isnd
 lexp  = i_to_l iexp
 lexp1 = i_to_l iexp1
 lexp2 = i_to_l iexp2
 lexp3 = i_to_l iexp3
+lexp4 = i_to_l iexp4
+lexp5 = i_to_l iexp5
+lexp6 = i_to_l iexp6
