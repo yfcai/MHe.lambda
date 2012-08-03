@@ -110,6 +110,8 @@ iexp4 = Ilam 'x' $ Ilam 'x' $ Ilam 'y' $ Ivar 0
 iexp5 = Ilam 'f' $ Iapp iid (Ivar 0)
 iexp6 = Iapp (Ilam 'x' $ Iapp (Ivar 0) (Ivar 0))
              (Iapp iid (Icon 'W'))
+iexp7 = Ilam 'x' $ Ilam 'y' $ Ilam 'z'
+      $ Iapp (Iapp (Ivar 2) (Ivar 0)) (Iapp (Ivar 1) (Ivar 0))
 -- therefore we make level-terms from index-terms
 lid   = i_to_l iid
 lrep  = i_to_l irep
@@ -124,3 +126,4 @@ lexp3 = i_to_l iexp3
 lexp4 = i_to_l iexp4
 lexp5 = i_to_l iexp5
 lexp6 = i_to_l iexp6
+lexp7 = i_to_l iexp7
