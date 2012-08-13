@@ -24,28 +24,6 @@ data Ilambda
  | Ilam Char Ilambda
  | Iapp Ilambda Ilambda
 
-{--- "polymorphic" pattern matching 
-class CVAL a where
- cval :: ((Char -> a) -> Char -> b) ->
-         ((Int -> a) -> Int -> b) ->
-         ((a -> a -> a) -> a -> a -> b) ->
-         ((Char -> a -> a) -> Char -> a -> b) -> (a -> b)
-
-instance CVAL Llambda where
- cval fc fv fa fl body = case body of
-  Lcon c   -> fc Lcon c
-  Lvar i   -> fv Lvar i
-  Lapp s t -> fa Lapp s t
-  Llam x s -> fl Llam x s
-
-instance CVAL Ilambda where
- cval fc fv fa fl body = case body of
-  Icon c   -> fc Icon c
-  Ivar i   -> fv Ivar i
-  Iapp s t -> fa Iapp s t
-  Ilam x s -> fl Ilam x s
--}
-
 instance Show Llambda where
  show = let
   to_s :: Map.Map Int [Char] -> Set.Set Char -> Int -> Llambda -> [Char]
