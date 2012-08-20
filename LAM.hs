@@ -3,6 +3,7 @@
 
 module LAM where
 
+import Church
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -30,9 +31,10 @@ instance Show Llambda where
   to_s names taken level body = case body of
    Lcon c   -> c:[]
    Lvar i   -> Map.findWithDefault ('?':show i) i names
-   Llam x s ->    let (x_name , new_taken) = if Set.member x taken
-                      then (x : show level , taken              )
-                      else (x : []         , Set.insert x taken )
+   Llam x s ->    let (x_name , new_taken) =
+                       (if' (Set.member x taken))
+                       (x : show level , taken              )
+                       (x : []         , Set.insert x taken )
                   in "λ" ++ x_name ++ ". "
                      ++ to_s (Map.insert level x_name names)
                              new_taken (level + 1) s

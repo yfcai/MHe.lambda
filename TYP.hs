@@ -2,6 +2,7 @@
 
 module TYP where
 
+import Church
 import LAM
 import Char(ord, chr)
 import qualified Data.Map as Map
@@ -43,8 +44,8 @@ instance Eq Type where
 
 instance Show Type where
  show a = let
-  show_var i = let j = i - 26 in if j < 0
-               then chr (ord 'z' + 1 + j) : [] else show j
+  show_var i = let
+   j = i - 26 in (j .< 0) (chr (ord 'z' + 1 + j) : []) (show j)
   in case a of
   Tcon            -> "*"
   Tvar i          -> show_var i
@@ -67,17 +68,17 @@ instance Typable Llambda where
  pinfer = plinfer
 
 -- whether Tvar j is free in the type b
-is_free :: Int -> Type -> Bool
+is_free :: Int -> Type -> Cbool
 is_free j b = case b of
- Tcon   -> False
- Tvar i -> i == j
- c :> d -> is_free j c || is_free j d
+ Tcon   -> false
+ Tvar i -> i .== j
+ c :> d -> is_free j c .|| is_free j d
 
 -- substitute each occurrence of Tvar i with b in c
 tsub :: Int -> Type -> Type -> Type
 tsub i b c = case c of
  Tcon   -> c
- Tvar j -> if j == i then b else c
+ Tvar j -> (j .== i) b c
  d :> e -> tsub i b d :> tsub i b e
 
 -- substitute each Tvar i of a with its value in tmap if exists
@@ -93,12 +94,10 @@ mgs :: [Constraint] -> Maybe (Map.Map Int Type)
 mgs cs = loop cs (Just Map.empty) where
  loop [] ss = ss
  loop (Unify a b : cs) ss = ss >>= \tmap -> case (a,b) of
-  (Tvar i,_)  -> if is_free i b
-                 then Nothing
-                 else loop (uclean i b cs) (tclean i b tmap)
-  (_,Tvar j)  -> if is_free j a
-                 then Nothing
-                 else loop (uclean j a cs) (tclean j a tmap)
+  (Tvar i,_)  -> (is_free i b) Nothing
+                             $ loop (uclean i b cs) (tclean i b tmap)
+  (_,Tvar j)  -> (is_free j a) Nothing
+                             $ loop (uclean j a cs) (tclean j a tmap)
   (c:>d,e:>f) -> loop (Unify c e : Unify d f : cs) ss
   otherwise   -> Nothing
  uclean i b = map (\(Unify c d) -> Unify (tsub i b c) (tsub i b d))
